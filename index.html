@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV Trip Log</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --surface: #151820;
+    --surface2: #1c2130;
+    --border: #2a3145;
+    --accent: #00e5a0;
+    --accent2: #0090ff;
+    --text: #e8eaf0;
+    --muted: #6b7592;
+    --label: #9ba8c4;
+    --danger: #ff5c5c;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  /* Header */
+  .header {
+    max-width: 560px;
+    margin: 0 auto 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .header-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Card */
+  .card {
+    max-width: 560px;
+    margin: 0 auto 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .card-dot.blue { background: var(--accent2); }
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .card-body { padding: 16px 20px 20px; }
+
+  /* Form grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    color: var(--label);
+    font-weight: 400;
+    letter-spacing: 0.1px;
+  }
+  label .unit {
+    color: var(--muted);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 11px 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.08);
+  }
+  input[type="date"] { cursor: pointer; }
+  input::placeholder { color: var(--muted); font-size: 13px; }
+  select option { background: var(--surface2); }
+
+  /* Percent bar (charge) */
+  .charge-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .charge-visual {
+    grid-column: 1 / -1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .charge-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent2) 0%, var(--accent) 100%);
+    transition: width 0.3s ease;
+    position: absolute;
+  }
+
+  /* Energy split */
+  .split-bar {
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    margin-top: 10px;
+    gap: 2px;
+  }
+  .split-seg {
+    height: 100%;
+    border-radius: 3px;
+    transition: flex 0.3s ease;
+  }
+  .split-seg.drive { background: var(--accent); }
+  .split-seg.ac    { background: var(--accent2); }
+  .split-seg.other { background: #ff9f40; }
+  .split-labels {
+    display: flex; gap: 16px; margin-top: 8px; flex-wrap: wrap;
+  }
+  .split-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .split-dot.drive { background: var(--accent); }
+  .split-dot.ac    { background: var(--accent2); }
+  .split-dot.other { background: #ff9f40; }
+  .split-tag { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+
+  /* Driver toggle */
+  .driver-toggle { display: flex; gap: 8px; }
+  .driver-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .driver-btn.active {
+    background: rgba(0,229,160,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Charge type toggle */
+  .acdc-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+  .acdc-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 9px 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+  .acdc-btn.active-ac {
+    background: rgba(0,144,255,0.1);
+    border-color: var(--accent2);
+    color: var(--accent2);
+    font-weight: 500;
+  }
+  .acdc-btn.active-dc {
+    background: rgba(255,159,64,0.1);
+    border-color: #ff9f40;
+    color: #ff9f40;
+    font-weight: 500;
+  }
+  .acdc-btn.active-none {
+    background: rgba(107,117,146,0.15);
+    border-color: var(--muted);
+    color: var(--label);
+    font-weight: 500;
+  }
+
+  /* Submit */
+  .submit-btn {
+    max-width: 560px;
+    margin: 4px auto 0;
+    display: block;
+    width: 100%;
+    padding: 15px;
+    background: var(--accent);
+    color: #0d0f12;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.2px;
+  }
+  .submit-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* Status */
+  .status {
+    max-width: 560px;
+    margin: 12px auto 0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    text-align: center;
+    display: none;
+  }
+  .status.success { background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.3); color: var(--accent); }
+  .status.error   { background: rgba(255,92,92,0.1);  border: 1px solid rgba(255,92,92,0.3);  color: var(--danger); }
+
+  /* Validation hint */
+  .hint { font-size: 11px; color: var(--danger); margin-top: 3px; display: none; }
+  .field.invalid input { border-color: var(--danger); }
+  .field.invalid .hint { display: block; }
+
+  @media (max-width: 400px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">⚡</div>
+  <div>
+    <div class="header-title">EV Trip Log</div>
+    <div class="header-sub">บันทึกข้อมูลการขับ</div>
+  </div>
+</div>
+
+<!-- Section 1: General -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-dot"></div>
+    <div class="card-label">ข้อมูลทั่วไป</div>
+  </div>
+  <div class="card-body">
+    <div class="grid-2" style="gap:12px">
+      <div class="field full">
+        <label>วันที่</label>
+        <input type="date" id="date">
+      </div>
+      <div class="field full">
+        <label>ผู้บันทึก</label>
+        <div class="driver-toggle">
+          <button class="driver-btn active" onclick="setDriver(this,'พี่ต้น')">พี่ต้น</button>
+          <button class="driver-btn" onclick="setDriver(this,'พี่เล็ก')">พี่เล็ก</button>
+        </div>
+        <input type="hidden" id="driver" value="พี่ต้น">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: Trip stats -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-dot blue"></div>
+    <div class="card-label">สถิติการขับ</div>
+  </div>
+  <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+    <div class="field" id="f-dist">
+      <label>ระยะทางสะสม <span class="unit">km</span></label>
+      <input type="number" id="distance" placeholder="0.0" step="0.1" min="0" oninput="validate('f-dist','distance')">
+      <div class="hint">กรุณากรอกระยะทาง</div>
+    </div>
+    <div class="grid-2">
+      <div class="field" id="f-cons_trip">
+        <label>อัตราสิ้นเปลือง trip <span class="unit">kWh/100km</span></label>
+        <input type="number" id="cons_trip" placeholder="0.0" step="0.1" min="0" oninput="validate('f-cons_trip','cons_trip')">
+        <div class="hint">กรุณากรอกค่า</div>
+      </div>
+      <div class="field">
+        <label>อัตราสิ้นเปลือง all <span class="unit">kWh/100km</span></label>
+        <input type="number" id="cons_all" placeholder="0.0" step="0.1" min="0">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>ความเร็วเฉลี่ย trip <span class="unit">km/h</span></label>
+        <input type="number" id="speed_trip" placeholder="0.0" step="0.1" min="0">
+      </div>
+      <div class="field">
+        <label>ความเร็วเฉลี่ยรวม (total) <span class="unit">km/h</span></label>
+        <input type="number" id="speed_all" placeholder="0.0" step="0.1" min="0">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Energy split -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-dot" style="background:#ff9f40"></div>
+    <div class="card-label">สัดส่วนพลังงาน</div>
+  </div>
+  <div class="card-body">
+    <div class="grid-3" style="gap:12px">
+      <div class="field">
+        <label>ขับเคลื่อน <span class="unit">%</span></label>
+        <input type="number" id="pct_drive" placeholder="0" step="1" min="0" max="100" oninput="updateSplit()">
+      </div>
+      <div class="field">
+        <label>แอร์ <span class="unit">%</span></label>
+        <input type="number" id="pct_ac" placeholder="0" step="1" min="0" max="100" oninput="updateSplit()">
+      </div>
+      <div class="field">
+        <label>อื่น ๆ <span class="unit">%</span></label>
+        <input type="number" id="pct_other" placeholder="0" step="1" min="0" max="100" oninput="updateSplit()">
+      </div>
+    </div>
+    <div class="split-bar">
+      <div class="split-seg drive" id="bar-drive" style="flex:0"></div>
+      <div class="split-seg ac"    id="bar-ac"    style="flex:0"></div>
+      <div class="split-seg other" id="bar-other" style="flex:0"></div>
+      <div class="split-seg" id="bar-empty" style="flex:100;background:var(--border)"></div>
+    </div>
+    <div class="split-labels">
+      <div class="split-tag"><div class="split-dot drive"></div><span id="lbl-drive">ขับ 0%</span></div>
+      <div class="split-tag"><div class="split-dot ac"></div><span id="lbl-ac">แอร์ 0%</span></div>
+      <div class="split-tag"><div class="split-dot other"></div><span id="lbl-other">อื่น 0%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 4: Charging -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-dot" style="background:var(--accent2)"></div>
+    <div class="card-label">การชาร์จ</div>
+  </div>
+  <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+    <div class="charge-row">
+      <div class="field">
+        <label>ชาร์จจาก <span class="unit">%</span></label>
+        <input type="number" id="charge_from" placeholder="0" min="0" max="100" step="1" oninput="updateCharge()">
+      </div>
+      <div class="field">
+        <label>ชาร์จถึง <span class="unit">%</span></label>
+        <input type="number" id="charge_to" placeholder="0" min="0" max="100" step="1" oninput="updateCharge()">
+      </div>
+      <div class="charge-visual">
+        <div class="charge-fill" id="charge-bar-from" style="left:0;width:0;background:var(--border)"></div>
+        <div class="charge-fill" id="charge-bar-range" style="left:0;width:0"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>ชาร์จแบบ</label>
+      <div class="acdc-toggle">
+        <button class="acdc-btn" onclick="setChargeType(this,'ac')">AC Portable</button>
+        <button class="acdc-btn" onclick="setChargeType(this,'ac')">AC Wall Charge</button>
+        <button class="acdc-btn" onclick="setChargeType(this,'dc')">DC Spark บางจาก</button>
+        <button class="acdc-btn" onclick="setChargeType(this,'dc')">DC EVStationPluz PTT</button>
+        <button class="acdc-btn" onclick="setChargeType(this,'none')">ไม่ได้ชาร์จ</button>
+      </div>
+      <input type="hidden" id="charge_type" value="">
+    </div>
+  </div>
+</div>
+
+<button class="submit-btn" onclick="submitForm()">⚡ บันทึกข้อมูล</button>
+<div class="status" id="status"></div>
+
+<script>
+// ===== Set today's date =====
+document.getElementById('date').valueAsDate = new Date();
+
+// ===== Driver toggle =====
+function setDriver(btn, name) {
+  document.querySelectorAll('.driver-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('driver').value = name;
+}
+
+// ===== Charge type =====
+function setChargeType(btn, style) {
+  document.querySelectorAll('.acdc-btn').forEach(b => {
+    b.classList.remove('active-ac','active-dc','active-none');
+  });
+  document.getElementById('charge_type').value = btn.textContent.trim();
+  if (style === 'ac')   btn.classList.add('active-ac');
+  if (style === 'dc')   btn.classList.add('active-dc');
+  if (style === 'none') btn.classList.add('active-none');
+}
+
+// ===== Energy split bar =====
+function updateSplit() {
+  const d = parseFloat(document.getElementById('pct_drive').value) || 0;
+  const a = parseFloat(document.getElementById('pct_ac').value) || 0;
+  const o = parseFloat(document.getElementById('pct_other').value) || 0;
+  const total = d + a + o;
+  document.getElementById('bar-drive').style.flex = d;
+  document.getElementById('bar-ac').style.flex = a;
+  document.getElementById('bar-other').style.flex = o;
+  document.getElementById('bar-empty').style.flex = Math.max(0, 100 - total);
+  document.getElementById('lbl-drive').textContent = `ขับ ${d}%`;
+  document.getElementById('lbl-ac').textContent = `แอร์ ${a}%`;
+  document.getElementById('lbl-other').textContent = `อื่น ${o}%`;
+}
+
+// ===== Charge bar =====
+function updateCharge() {
+  const from = parseFloat(document.getElementById('charge_from').value) || 0;
+  const to   = parseFloat(document.getElementById('charge_to').value)   || 0;
+  const f = Math.min(Math.max(from, 0), 100);
+  const t = Math.min(Math.max(to, 0), 100);
+  document.getElementById('charge-bar-from').style.width = f + '%';
+  const left  = Math.min(f, t);
+  const right = Math.max(f, t);
+  document.getElementById('charge-bar-range').style.left  = left + '%';
+  document.getElementById('charge-bar-range').style.width = (right - left) + '%';
+}
+
+// ===== Validation =====
+function validate(fieldId, inputId) {
+  const val = document.getElementById(inputId).value;
+  document.getElementById(fieldId).classList.toggle('invalid', val === '' || isNaN(val));
+}
+
+// ===== Submit =====
+async function submitForm() {
+  const date      = document.getElementById('date').value;
+  const driver    = document.getElementById('driver').value;
+  const distance  = document.getElementById('distance').value;
+  const cons_trip = document.getElementById('cons_trip').value;
+
+  // Basic required check
+  let ok = true;
+  if (!distance) { document.getElementById('f-dist').classList.add('invalid'); ok = false; }
+  if (!cons_trip){ document.getElementById('f-cons_trip').classList.add('invalid'); ok = false; }
+  if (!date) { alert('กรุณาเลือกวันที่'); ok = false; }
+  if (!ok) return;
+
+  const payload = {
+    วันที่: date,
+    ผู้บันทึก: driver,
+    ระยะทาง_km: distance,
+    อัตราสิ้นเปลือง_trip_kWh100km: document.getElementById('cons_trip').value,
+    อัตราสิ้นเปลือง_all_kWh100km:  document.getElementById('cons_all').value,
+    ความเร็วเฉลี่ย_trip_kmh:        document.getElementById('speed_trip').value,
+    ความเร็วเฉลี่ย_all_kmh:         document.getElementById('speed_all').value,
+    pct_ขับเคลื่อน: document.getElementById('pct_drive').value,
+    pct_แอร์:       document.getElementById('pct_ac').value,
+    pct_อื่น:       document.getElementById('pct_other').value,
+    ชาร์จจาก_pct:   document.getElementById('charge_from').value,
+    ชาร์จถึง_pct:   document.getElementById('charge_to').value,
+    ชาร์จแบบ:       document.getElementById('charge_type').value,
+  };
+
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxRpTQFCh8rAA-TVL8dWfH__mGh3nb_2qjFKdSWqfAgLfXAi7ndkfC9vCf3kFy2u3pz/exec';
+
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = 'กำลังบันทึก…';
+  btn.disabled = true;
+
+  const status = document.getElementById('status');
+  status.style.display = 'none';
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    if (text.includes('OK') || res.ok) {
+      status.className = 'status success';
+      status.textContent = '✓ บันทึกสำเร็จแล้วค่ะ';
+      status.style.display = 'block';
+      // reset numeric fields
+      ['distance','cons_trip','cons_all','speed_trip','speed_all',
+       'pct_drive','pct_ac','pct_other','charge_from','charge_to'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      updateSplit(); updateCharge();
+      document.getElementById('charge_type').value = '';
+      document.querySelectorAll('.acdc-btn').forEach(b => {
+        b.classList.remove('active-ac','active-dc','active-none');
+      });
+      document.getElementById('date').valueAsDate = new Date();
+    } else {
+      throw new Error('Response not OK');
+    }
+  } catch (e) {
+    status.className = 'status error';
+    status.textContent = '✗ เกิดข้อผิดพลาด กรุณาตรวจสอบ URL ของ Apps Script';
+    status.style.display = 'block';
+  }
+
+  btn.textContent = '⚡ บันทึกข้อมูล';
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
