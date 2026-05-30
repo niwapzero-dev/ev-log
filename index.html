@@ -276,6 +276,26 @@
   .field.invalid input { border-color: var(--danger); }
   .field.invalid .hint { display: block; }
 
+  /* Cost display */
+  .cost-box {
+    display: none;
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .cost-box.show { display: block; }
+  .cost-label { font-size: 12px; color: var(--label); margin-bottom: 6px; }
+  .cost-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .cost-value.dc { color: #ff9f40; }
+  .cost-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
   @media (max-width: 400px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
   }
@@ -418,6 +438,26 @@
       </div>
       <input type="hidden" id="charge_type" value="">
     </div>
+
+    <!-- DC: กรอกเงินที่จ่าย -->
+    <div class="field" id="field-dc-cost" style="display:none">
+      <label>ยอดเงินที่จ่าย <span class="unit">บาท</span></label>
+      <input type="number" id="dc_cost" placeholder="0.00" step="0.01" min="0" oninput="updateCost()">
+    </div>
+
+    <!-- AC: แสดงค่าไฟที่คำนวณ -->
+    <div class="cost-box" id="cost-ac-box">
+      <div class="cost-label">ค่าไฟโดยประมาณ (AC)</div>
+      <div class="cost-value" id="cost-ac-value">— บาท</div>
+      <div class="cost-sub" id="cost-ac-sub">กรอก % ชาร์จด้านบนก่อนนะคะ</div>
+    </div>
+
+    <!-- DC: แสดงยอดที่กรอก -->
+    <div class="cost-box" id="cost-dc-box">
+      <div class="cost-label">ค่าชาร์จ DC</div>
+      <div class="cost-value dc" id="cost-dc-value">— บาท</div>
+      <div class="cost-sub">ยอดที่จ่ายจริง</div>
+    </div>
   </div>
 </div>
 
@@ -436,6 +476,9 @@ function setDriver(btn, name) {
 }
 
 // ===== Charge type =====
+const USABLE_KWH = 37.0;
+const RATE_AC    = 4.6;
+
 function setChargeType(btn, style) {
   document.querySelectorAll('.acdc-btn').forEach(b => {
     b.classList.remove('active-ac','active-dc','active-none');
@@ -444,6 +487,40 @@ function setChargeType(btn, style) {
   if (style === 'ac')   btn.classList.add('active-ac');
   if (style === 'dc')   btn.classList.add('active-dc');
   if (style === 'none') btn.classList.add('active-none');
+
+  // show/hide cost boxes
+  document.getElementById('cost-ac-box').classList.toggle('show', style === 'ac');
+  document.getElementById('cost-dc-box').classList.toggle('show', style === 'dc');
+  document.getElementById('field-dc-cost').style.display = style === 'dc' ? 'flex' : 'none';
+
+  updateCost();
+}
+
+function updateCost() {
+  const style = document.getElementById('charge_type').value;
+  const isAC = ['AC Portable','AC Wall Charge'].includes(style);
+  const isDC = ['DC Spark บางจาก','DC EVStationPluz PTT'].includes(style);
+
+  if (isAC) {
+    const from = parseFloat(document.getElementById('charge_from').value);
+    const to   = parseFloat(document.getElementById('charge_to').value);
+    if (!isNaN(from) && !isNaN(to) && to > from) {
+      const kwh  = ((to - from) / 100) * USABLE_KWH;
+      const cost = kwh * RATE_AC;
+      document.getElementById('cost-ac-value').textContent = cost.toFixed(2) + ' บาท';
+      document.getElementById('cost-ac-sub').textContent =
+        `${kwh.toFixed(2)} kWh × ${RATE_AC} บาท/หน่วย (แบต usable ${USABLE_KWH} kWh)`;
+    } else {
+      document.getElementById('cost-ac-value').textContent = '— บาท';
+      document.getElementById('cost-ac-sub').textContent = 'กรอก % ชาร์จด้านบนก่อนนะคะ';
+    }
+  }
+
+  if (isDC) {
+    const val = parseFloat(document.getElementById('dc_cost').value);
+    document.getElementById('cost-dc-value').textContent =
+      isNaN(val) || val === 0 ? '— บาท' : val.toFixed(2) + ' บาท';
+  }
 }
 
 // ===== Energy split bar =====
@@ -472,6 +549,7 @@ function updateCharge() {
   const right = Math.max(f, t);
   document.getElementById('charge-bar-range').style.left  = left + '%';
   document.getElementById('charge-bar-range').style.width = (right - left) + '%';
+  updateCost();
 }
 
 // ===== Validation =====
@@ -508,9 +586,11 @@ async function submitForm() {
     ชาร์จจาก_pct:   document.getElementById('charge_from').value,
     ชาร์จถึง_pct:   document.getElementById('charge_to').value,
     ชาร์จแบบ:       document.getElementById('charge_type').value,
+    ค่าไฟ_AC_บาท:   document.getElementById('cost-ac-value').textContent.replace(' บาท','').replace('—',''),
+    ค่าชาร์จ_DC_บาท: document.getElementById('dc_cost').value,
   };
 
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxRpTQFCh8rAA-TVL8dWfH__mGh3nb_2qjFKdSWqfAgLfXAi7ndkfC9vCf3kFy2u3pz/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxIGklsEE0C_8_hdGGPrcVdV5HAM51ZoXwHkjVxrJzK-sbKrVWagEgKfKWaFhmQS2pd/exec';
 
   const btn = document.querySelector('.submit-btn');
   btn.textContent = 'กำลังบันทึก…';
@@ -531,7 +611,7 @@ async function submitForm() {
       status.style.display = 'block';
       // reset numeric fields
       ['distance','cons_trip','cons_all','speed_trip','speed_all',
-       'pct_drive','pct_ac','pct_other','charge_from','charge_to'].forEach(id => {
+       'pct_drive','pct_ac','pct_other','charge_from','charge_to','dc_cost'].forEach(id => {
         document.getElementById(id).value = '';
       });
       updateSplit(); updateCharge();
@@ -539,6 +619,9 @@ async function submitForm() {
       document.querySelectorAll('.acdc-btn').forEach(b => {
         b.classList.remove('active-ac','active-dc','active-none');
       });
+      document.getElementById('cost-ac-box').classList.remove('show');
+      document.getElementById('cost-dc-box').classList.remove('show');
+      document.getElementById('field-dc-cost').style.display = 'none';
       document.getElementById('date').valueAsDate = new Date();
     } else {
       throw new Error('Response not OK');
