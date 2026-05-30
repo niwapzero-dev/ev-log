@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0f12;
+    --surface: #151820;
+    --surface2: #1c2130;
+    --border: #2a3145;
+    --accent: #00e5a0;
+    --accent2: #0090ff;
+    --warn: #ff9f40;
+    --danger: #ff5c5c;
+    --text: #e8eaf0;
+    --muted: #6b7592;
+    --label: #9ba8c4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  /* Header */
+  .header {
+    max-width: 900px;
+    margin: 0 auto 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .header-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.3px;
+  }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .refresh-btn {
+    padding: 8px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--label);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Wrap */
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+  }
+  .loading-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin: 0 3px;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+  /* Stat cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.green::before { background: var(--accent); }
+  .stat-card.blue::before  { background: var(--accent2); }
+  .stat-card.orange::before{ background: var(--warn); }
+  .stat-card.red::before   { background: var(--danger); }
+  .stat-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 500; line-height: 1; }
+  .stat-value.green { color: var(--accent); }
+  .stat-value.blue  { color: var(--accent2); }
+  .stat-value.orange{ color: var(--warn); }
+  .stat-value.red   { color: var(--danger); }
+  .stat-unit { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Chart cards */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .chart-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .chart-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .chart-dot.green { background: var(--accent); }
+  .chart-dot.blue  { background: var(--accent2); }
+  .chart-dot.orange{ background: var(--warn); }
+  .chart-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 0.8px; text-transform: uppercase;
+  }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* Grid 2 col */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* Donut center */
+  .donut-wrap { position: relative; height: 220px; display: flex; align-items: center; justify-content: center; }
+  .donut-center {
+    position: absolute;
+    text-align: center;
+    pointer-events: none;
+  }
+  .donut-center-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--accent); }
+  .donut-center-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Charge table */
+  .charge-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .charge-row-item { display: flex; align-items: center; gap: 10px; }
+  .charge-bar-bg { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .charge-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .charge-name { font-size: 13px; color: var(--label); min-width: 130px; }
+  .charge-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
+
+  /* Last trips table */
+  .trips-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .trips-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .trips-table td { padding: 10px 12px; border-bottom: 1px solid rgba(42,49,69,0.5); }
+  .trips-table tr:last-child td { border: none; }
+  .trips-table tr:hover td { background: var(--surface2); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+  }
+  .badge.ac { background: rgba(0,144,255,0.12); color: var(--accent2); }
+  .badge.dc { background: rgba(255,159,64,0.12); color: var(--warn); }
+
+  /* Error */
+  .error-box {
+    background: rgba(255,92,92,0.08);
+    border: 1px solid rgba(255,92,92,0.25);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: var(--danger);
+    font-size: 14px;
+  }
+
+  @media (max-width: 560px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">⚡</div>
+      <div>
+        <div class="header-title">EV Dashboard</div>
+        <div class="header-sub" id="last-update">กำลังโหลด...</div>
+      </div>
+    </div>
+    <button class="refresh-btn" onclick="loadData()">↻ รีเฟรช</button>
+  </div>
+
+  <div id="main-content">
+    <div class="loading">
+      <div style="margin-bottom:16px">
+        <span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+      </div>
+      กำลังโหลดข้อมูลจาก Google Sheet...
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxIGklsEE0C_8_hdGGPrcVdV5HAM51ZoXwHkjVxrJzK-sbKrVWagEgKfKWaFhmQS2pd/exec';
+
+// ===== LOAD DATA =====
+async function loadData() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="loading">
+      <div style="margin-bottom:16px">
+        <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+      </div>
+      กำลังโหลดข้อมูล...
+    </div>`;
+
+  try {
+    const res  = await fetch(GAS_URL + '?action=getData');
+    const json = await res.json();
+    if (json.status !== 'OK') throw new Error(json.message);
+    renderDashboard(json.data);
+  } catch (err) {
+    document.getElementById('main-content').innerHTML = `
+      <div class="error-box">
+        ⚠️ โหลดข้อมูลไม่ได้ค่ะ<br>
+        <small style="color:var(--muted);margin-top:6px;display:block">${err.message}</small>
+        <small style="color:var(--muted)">ตรวจสอบว่าใส่ GAS_URL ถูกต้องและ Deploy แล้วนะคะ</small>
+      </div>`;
+  }
+}
+
+// ===== RENDER =====
+function renderDashboard(raw) {
+  // clean data
+  const rows = raw.filter(r => r['ระยะทาง, km'] && r['ระยะทาง, km'] !== '');
+
+  // ---- STATS ----
+  const totalKm     = Math.max(...rows.map(r => num(r['ระยะทาง, km'])));
+  const firstKm     = Math.min(...rows.map(r => num(r['ระยะทาง, km'])));
+  const drivenKm    = totalKm - firstKm;
+  const allCosts    = rows.map(r => num(r['ค่าไฟ AC (บาท)']) + num(r['ค่าชาร์จ DC (บาท)']));
+  const totalCost   = allCosts.reduce((a,b) => a+b, 0);
+  const bpkm        = rows.filter(r => r['บาท/km'] && r['บาท/km'] !== '').map(r => num(r['บาท/km']));
+  const avgBpkm     = bpkm.length ? bpkm.reduce((a,b)=>a+b,0)/bpkm.length : 0;
+  const consVals    = rows.map(r => num(r['อัตราสิ้นเปลือง trip, kWh/100km'])).filter(v => v > 0);
+  const avgCons     = consVals.length ? consVals.reduce((a,b)=>a+b,0)/consVals.length : 0;
+
+  // ---- DATES ----
+  const dates = rows.map(r => {
+    const d = r['วันที่'];
+    return d instanceof Date ? d : new Date(d);
+  }).filter(d => !isNaN(d));
+  const sortedDates = [...dates].sort((a,b) => a-b);
+  const lastDate = sortedDates[sortedDates.length-1];
+  document.getElementById('last-update').textContent =
+    'อัปเดตล่าสุด: ' + new Date().toLocaleTimeString('th-TH');
+
+  // ---- SORTED ROWS ----
+  const sortedRows = [...rows].sort((a,b) => {
+    const da = a['วันที่'] instanceof Date ? a['วันที่'] : new Date(a['วันที่']);
+    const db = b['วันที่'] instanceof Date ? b['วันที่'] : new Date(b['วันที่']);
+    return da - db;
+  });
+
+  // ---- ENERGY SPLIT AVG ----
+  const avgDrive = avg(rows, 'สัดส่วน % พลังงานที่ใช้ขับเคลื่อน');
+  const avgAC    = avg(rows, 'สัดส่วน % พลังงานที่ใช้แอร์');
+  const avgOther = avg(rows, 'สัดส่วน % พลังงานที่ใช้อื่น ๆ');
+
+  // ---- CHARGE TYPE ----
+  const chargeCounts = {};
+  rows.forEach(r => {
+    const t = r['ชาร์จแบบ AC/DC'] || 'ไม่ระบุ';
+    chargeCounts[t] = (chargeCounts[t] || 0) + 1;
+  });
+  const chargeTotal = Object.values(chargeCounts).reduce((a,b)=>a+b,0);
+  const chargeColors = {
+    'AC Portable':          '#0090ff',
+    'AC Wall Charge':       '#00c8ff',
+    'DC Spark บางจาก':      '#ff9f40',
+    'DC EVStationPluz PTT': '#ff6b35',
+  };
+
+  // ---- RENDER HTML ----
+  document.getElementById('main-content').innerHTML = `
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <div class="stat-label">ระยะทางสะสม</div>
+        <div class="stat-value green">${totalKm.toLocaleString()}</div>
+        <div class="stat-unit">km</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">ค่าใช้จ่ายรวม</div>
+        <div class="stat-value blue">${totalCost.toFixed(0)}</div>
+        <div class="stat-unit">บาท</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">บาท/km เฉลี่ย</div>
+        <div class="stat-value orange">${avgBpkm.toFixed(2)}</div>
+        <div class="stat-unit">บาท/km</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">อัตราสิ้นเปลือง</div>
+        <div class="stat-value red">${avgCons.toFixed(1)}</div>
+        <div class="stat-unit">kWh/100km เฉลี่ย</div>
+      </div>
+    </div>
+
+    <!-- Chart row 1 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-dot green"></div>
+        <div class="chart-title">ระยะทางสะสม (km)</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-dist"></canvas></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-dot orange"></div>
+          <div class="chart-title">บาท/km รายครั้ง</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-bpkm"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-dot blue"></div>
+          <div class="chart-title">อัตราสิ้นเปลือง (kWh/100km)</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-cons"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Energy donut -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-dot green"></div>
+          <div class="chart-title">สัดส่วนพลังงานเฉลี่ย</div>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="chart-energy"></canvas>
+          <div class="donut-center">
+            <div class="donut-center-val">${avgDrive.toFixed(0)}%</div>
+            <div class="donut-center-lbl">ขับเคลื่อน</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charge type -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-dot blue"></div>
+          <div class="chart-title">สถิติการชาร์จ</div>
+        </div>
+        <div class="charge-legend" id="charge-legend"></div>
+      </div>
+    </div>
+
+    <!-- Last trips -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-dot green"></div>
+        <div class="chart-title">บันทึกล่าสุด 5 ครั้ง</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="trips-table">
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>ระยะสะสม</th>
+              <th>kWh/100km</th>
+              <th>ชาร์จ</th>
+              <th>ค่าใช้จ่าย</th>
+              <th>บาท/km</th>
+            </tr>
+          </thead>
+          <tbody id="trips-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // ---- CHARTS ----
+  const chartDefaults = {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(42,49,69,0.6)' }, ticks: { color: '#6b7592', font: { size: 10, family: 'DM Mono' } } },
+      y: { grid: { color: 'rgba(42,49,69,0.6)' }, ticks: { color: '#6b7592', font: { size: 10, family: 'DM Mono' } } }
+    }
+  };
+
+  const labels = sortedRows.map(r => fmtDate(r['วันที่']));
+
+  // Distance
+  new Chart(document.getElementById('chart-dist'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: sortedRows.map(r => num(r['ระยะทาง, km'])),
+        borderColor: '#00e5a0',
+        backgroundColor: 'rgba(0,229,160,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#00e5a0',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+  });
+
+  // บาท/km
+  new Chart(document.getElementById('chart-bpkm'), {
+    type: 'bar',
+    data: {
+      labels: sortedRows.filter(r=>r['บาท/km'] && r['บาท/km']!=='').map(r=>fmtDate(r['วันที่'])),
+      datasets: [{
+        data: sortedRows.filter(r=>r['บาท/km'] && r['บาท/km']!=='').map(r=>num(r['บาท/km'])),
+        backgroundColor: 'rgba(255,159,64,0.7)',
+        borderColor: '#ff9f40',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+  });
+
+  // Consumption
+  new Chart(document.getElementById('chart-cons'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'trip',
+          data: sortedRows.map(r => num(r['อัตราสิ้นเปลือง trip, kWh/100km']) || null),
+          borderColor: '#0090ff',
+          backgroundColor: 'rgba(0,144,255,0.08)',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#0090ff',
+          fill: true,
+          tension: 0.3,
+        },
+        {
+          label: 'all',
+          data: sortedRows.map(r => num(r['อัตราสิ้นเปลือง all, kWh/100km']) || null),
+          borderColor: 'rgba(0,144,255,0.4)',
+          borderWidth: 1.5,
+          borderDash: [4,3],
+          pointRadius: 2,
+          tension: 0.3,
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: '#6b7592', font: { size: 10, family: 'DM Mono' }, boxWidth: 12 }
+        }
+      }
+    }
+  });
+
+  // Energy donut
+  new Chart(document.getElementById('chart-energy'), {
+    type: 'doughnut',
+    data: {
+      labels: ['ขับเคลื่อน', 'แอร์', 'อื่น ๆ'],
+      datasets: [{
+        data: [avgDrive, avgAC, avgOther],
+        backgroundColor: ['#00e5a0','#0090ff','#ff9f40'],
+        borderWidth: 0,
+        hoverOffset: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { color: '#9ba8c4', font: { size: 11, family: 'Sarabun' }, boxWidth: 10, padding: 12 }
+        }
+      }
+    }
+  });
+
+  // Charge type legend
+  const legendEl = document.getElementById('charge-legend');
+  Object.entries(chargeCounts)
+    .sort((a,b) => b[1]-a[1])
+    .forEach(([name, count]) => {
+      const pct = ((count / chargeTotal) * 100).toFixed(0);
+      const color = chargeColors[name] || '#6b7592';
+      legendEl.innerHTML += `
+        <div class="charge-row-item">
+          <div class="charge-name">${name}</div>
+          <div class="charge-bar-bg">
+            <div class="charge-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="charge-pct">${pct}%</div>
+        </div>`;
+    });
+
+  // Last 5 trips table
+  const tbody = document.getElementById('trips-tbody');
+  const last5 = [...sortedRows].reverse().slice(0, 5);
+  last5.forEach(r => {
+    const type = r['ชาร์จแบบ AC/DC'] || '';
+    const isAC = type.startsWith('AC');
+    const cost = num(r['ค่าไฟ AC (บาท)']) + num(r['ค่าชาร์จ DC (บาท)']);
+    const bpkm = r['บาท/km'] ? num(r['บาท/km']).toFixed(2) : '—';
+    tbody.innerHTML += `
+      <tr>
+        <td>${fmtDate(r['วันที่'])}</td>
+        <td style="font-family:'DM Mono',monospace">${num(r['ระยะทาง, km']).toLocaleString()}</td>
+        <td style="font-family:'DM Mono',monospace;color:var(--accent2)">${num(r['อัตราสิ้นเปลือง trip, kWh/100km']).toFixed(1)}</td>
+        <td><span class="badge ${isAC?'ac':'dc'}">${type}</span></td>
+        <td style="font-family:'DM Mono',monospace;color:var(--accent)">${cost > 0 ? cost.toFixed(0)+' ฿' : '—'}</td>
+        <td style="font-family:'DM Mono',monospace;color:var(--warn)">${bpkm}</td>
+      </tr>`;
+  });
+}
+
+// ===== HELPERS =====
+function num(v) { return parseFloat(v) || 0; }
+function avg(rows, key) {
+  const vals = rows.map(r => num(r[key])).filter(v => v > 0);
+  return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+}
+function fmtDate(d) {
+  const date = d instanceof Date ? d : new Date(d);
+  if (isNaN(date)) return String(d);
+  return date.toLocaleDateString('th-TH', { day:'numeric', month:'short' });
+}
+
+// ===== INIT =====
+loadData();
+</script>
+</body>
+</html>
