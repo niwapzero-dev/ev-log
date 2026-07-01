@@ -434,6 +434,9 @@
         <button class="acdc-btn" onclick="setChargeType(this,'ac')">AC Wall Charge</button>
         <button class="acdc-btn" onclick="setChargeType(this,'dc')">DC Spark บางจาก</button>
         <button class="acdc-btn" onclick="setChargeType(this,'dc')">DC EVStationPluz PTT</button>
+        <button class="acdc-btn" onclick="setChargeType(this,'dc')">DC EA Anywhere</button>
+        <button class="acdc-btn" onclick="setChargeType(this,'dc')">DC MEA EV</button>
+        <button class="acdc-btn" onclick="setChargeType(this,'dc')">DC อื่น ๆ</button>
         <button class="acdc-btn" onclick="setChargeType(this,'none')">ไม่ได้ชาร์จ</button>
       </div>
       <input type="hidden" id="charge_type" value="">
@@ -499,7 +502,7 @@ function setChargeType(btn, style) {
 function updateCost() {
   const style = document.getElementById('charge_type').value;
   const isAC = ['AC Portable','AC Wall Charge'].includes(style);
-  const isDC = ['DC Spark บางจาก','DC EVStationPluz PTT'].includes(style);
+  const isDC = style.startsWith('DC');
 
   if (isAC) {
     const from = parseFloat(document.getElementById('charge_from').value);
@@ -590,7 +593,7 @@ async function submitForm() {
     ค่าชาร์จ_DC_บาท: document.getElementById('dc_cost').value,
   };
 
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxIGklsEE0C_8_hdGGPrcVdV5HAM51ZoXwHkjVxrJzK-sbKrVWagEgKfKWaFhmQS2pd/exec';
+  const GAS_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 
   const btn = document.querySelector('.submit-btn');
   btn.textContent = 'กำลังบันทึก…';
