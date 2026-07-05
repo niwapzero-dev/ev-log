@@ -209,10 +209,7 @@ function renderDashboard(rawEV, rawMaint, rawLoan) {
 
   // --- Loan ---
   const loanRows  = rawLoan || [];
-  const totalLoan = sum(loanRows, 'จำนวนเงิน') || sum(loanRows, 'ค่างวด') || sum(loanRows, 'Amount') || loanRows.reduce((a,r)=>{
-    const keys = Object.keys(r).filter(k => !['วันที่','หมายเหตุ','รายการ'].includes(k));
-    return a + keys.reduce((s,k)=>s+num(r[k]),0);
-  }, 0);
+  const totalLoan = sum(loanRows, 'ค่าใช้จ่าย, บาท');
   const loanBpkm  = totalKm > 0 ? totalLoan / totalKm : 0;
 
   // --- Total cost/km ---
