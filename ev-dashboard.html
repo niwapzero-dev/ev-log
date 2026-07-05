@@ -3,212 +3,121 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EV Dashboard</title>
+<title>EV Dashboard — Geely EX2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0d0f12;
-    --surface: #151820;
-    --surface2: #1c2130;
-    --border: #2a3145;
-    --accent: #00e5a0;
-    --accent2: #0090ff;
-    --warn: #ff9f40;
-    --danger: #ff5c5c;
-    --text: #e8eaf0;
-    --muted: #6b7592;
-    --label: #9ba8c4;
+    --bg: #0d0f12; --surface: #151820; --surface2: #1c2130;
+    --border: #2a3145; --accent: #00e5a0; --accent2: #0090ff;
+    --warn: #ff9f40; --danger: #ff5c5c; --purple: #a78bfa;
+    --text: #e8eaf0; --muted: #6b7592; --label: #9ba8c4;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Sarabun', sans-serif;
-    font-weight: 300;
-    min-height: 100vh;
-    padding: 24px 16px 60px;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'Sarabun', sans-serif; font-weight: 300; min-height: 100vh; padding: 24px 16px 60px; }
+
+  .wrap { max-width: 960px; margin: 0 auto; }
 
   /* Header */
-  .header {
-    max-width: 900px;
-    margin: 0 auto 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
+  .header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
   .header-left { display: flex; align-items: center; gap: 12px; }
-  .header-icon {
-    width: 40px; height: 40px;
-    background: var(--accent);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; flex-shrink: 0;
-  }
-  .header-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 18px; font-weight: 500;
-    letter-spacing: -0.3px;
-  }
+  .header-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .header-title { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; }
   .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
-  .refresh-btn {
-    padding: 8px 16px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--label);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+  .refresh-btn { padding: 8px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--label); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; transition: all .15s; }
   .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* Wrap */
-  .wrap { max-width: 900px; margin: 0 auto; }
-
-  /* Loading */
-  .loading {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-  }
-  .loading-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-    margin: 0 3px;
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes pulse { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+  /* Section label */
+  .section-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
   /* Stat cards */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px 18px;
-    position: relative;
-    overflow: hidden;
-  }
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
   .stat-card.green::before { background: var(--accent); }
   .stat-card.blue::before  { background: var(--accent2); }
   .stat-card.orange::before{ background: var(--warn); }
   .stat-card.red::before   { background: var(--danger); }
-  .stat-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
-  .stat-value { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 500; line-height: 1; }
-  .stat-value.green { color: var(--accent); }
-  .stat-value.blue  { color: var(--accent2); }
-  .stat-value.orange{ color: var(--warn); }
-  .stat-value.red   { color: var(--danger); }
-  .stat-unit { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-card.purple::before{ background: var(--purple); }
+  .stat-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; line-height: 1; }
+  .stat-value.green  { color: var(--accent); }
+  .stat-value.blue   { color: var(--accent2); }
+  .stat-value.orange { color: var(--warn); }
+  .stat-value.red    { color: var(--danger); }
+  .stat-value.purple { color: var(--purple); }
+  .stat-unit { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
   /* Chart cards */
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  .chart-header {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 16px;
-  }
-  .chart-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .chart-dot.green { background: var(--accent); }
-  .chart-dot.blue  { background: var(--accent2); }
-  .chart-dot.orange{ background: var(--warn); }
-  .chart-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; color: var(--muted);
-    letter-spacing: 0.8px; text-transform: uppercase;
-  }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .chart-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .chart-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .chart-dot.green  { background: var(--accent); }
+  .chart-dot.blue   { background: var(--accent2); }
+  .chart-dot.orange { background: var(--warn); }
+  .chart-dot.purple { background: var(--purple); }
+  .chart-title { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
   .chart-wrap { position: relative; height: 220px; }
 
-  /* Grid 2 col */
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 
-  /* Donut center */
+  /* Donut */
   .donut-wrap { position: relative; height: 220px; display: flex; align-items: center; justify-content: center; }
-  .donut-center {
-    position: absolute;
-    text-align: center;
-    pointer-events: none;
-  }
+  .donut-center { position: absolute; text-align: center; pointer-events: none; }
   .donut-center-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--accent); }
   .donut-center-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  /* Charge table */
-  .charge-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-  .charge-row-item { display: flex; align-items: center; gap: 10px; }
-  .charge-bar-bg { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-  .charge-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
-  .charge-name { font-size: 13px; color: var(--label); min-width: 130px; }
-  .charge-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
+  /* Bar legend */
+  .bar-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-name { font-size: 12px; color: var(--label); min-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-bg { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+  .bar-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); min-width: 50px; text-align: right; white-space: nowrap; }
 
-  /* Last trips table */
-  .trips-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .trips-table th {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 0.5px;
-    padding: 8px 12px; text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .trips-table td { padding: 10px 12px; border-bottom: 1px solid rgba(42,49,69,0.5); }
-  .trips-table tr:last-child td { border: none; }
-  .trips-table tr:hover td { background: var(--surface2); }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-  }
-  .badge.ac { background: rgba(0,144,255,0.12); color: var(--accent2); }
-  .badge.dc { background: rgba(255,159,64,0.12); color: var(--warn); }
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid rgba(42,49,69,.5); }
+  .data-table tr:last-child td { border: none; }
+  .data-table tr:hover td { background: var(--surface2); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .badge.ac     { background: rgba(0,144,255,.12); color: var(--accent2); }
+  .badge.dc     { background: rgba(255,159,64,.12); color: var(--warn); }
+  .badge.maint  { background: rgba(167,139,250,.12); color: var(--purple); }
 
-  /* Error */
-  .error-box {
-    background: rgba(255,92,92,0.08);
-    border: 1px solid rgba(255,92,92,0.25);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    color: var(--danger);
-    font-size: 14px;
-  }
+  /* Total cost banner */
+  .cost-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+  .cost-banner-title { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+  .cost-banner-val { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--accent); }
+  .cost-banner-unit { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .cost-breakdown { display: flex; flex-wrap: wrap; gap: 20px; flex: 1; }
+  .cost-item { }
+  .cost-item-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .cost-item-val { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; }
+  .cost-item-val.energy { color: var(--accent); }
+  .cost-item-val.maint  { color: var(--purple); }
+  .cost-item-val.loan   { color: var(--accent2); }
 
-  @media (max-width: 560px) {
+  /* Loading / Error */
+  .loading { text-align: center; padding: 60px 20px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 14px; }
+  .loading-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin: 0 3px; animation: pulse 1.2s ease-in-out infinite; }
+  .loading-dot:nth-child(2) { animation-delay: .2s; }
+  .loading-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+  .error-box { background: rgba(255,92,92,.08); border: 1px solid rgba(255,92,92,.25); border-radius: 12px; padding: 20px; text-align: center; color: var(--danger); font-size: 14px; }
+
+  @media (max-width: 600px) {
     .grid-2 { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
+    .cost-banner { flex-direction: column; gap: 16px; }
   }
 </style>
 </head>
 <body>
-
 <div class="wrap">
+
   <div class="header">
     <div class="header-left">
       <div class="header-icon">⚡</div>
@@ -223,359 +132,337 @@
   <div id="main-content">
     <div class="loading">
       <div style="margin-bottom:16px">
-        <span class="loading-dot"></span>
-        <span class="loading-dot"></span>
-        <span class="loading-dot"></span>
+        <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
       </div>
       กำลังโหลดข้อมูลจาก Google Sheet...
     </div>
   </div>
+
 </div>
 
 <script>
-// ===== CONFIG =====
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxIGklsEE0C_8_hdGGPrcVdV5HAM51ZoXwHkjVxrJzK-sbKrVWagEgKfKWaFhmQS2pd/exec';
+
+// ===== HELPERS =====
+const num  = v => parseFloat(v) || 0;
+const avg  = (arr, key) => { const v = arr.map(r=>num(r[key])).filter(x=>x>0); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0; };
+const sum  = (arr, key) => arr.reduce((a,r) => a + num(r[key]), 0);
+const fmtD = d => { const dt = d instanceof Date ? d : new Date(d); return isNaN(dt) ? String(d) : dt.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}); };
+const fmtN = (v,d=0) => num(v).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sortByDate = arr => [...arr].sort((a,b) => { const da = a['วันที่'] instanceof Date ? a['วันที่'] : new Date(a['วันที่']); const db = b['วันที่'] instanceof Date ? b['วันที่'] : new Date(b['วันที่']); return da-db; });
+
+const CHART_DEFAULTS = {
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid:{color:'rgba(42,49,69,.6)'}, ticks:{color:'#6b7592',font:{size:10,family:'DM Mono'}} },
+    y: { grid:{color:'rgba(42,49,69,.6)'}, ticks:{color:'#6b7592',font:{size:10,family:'DM Mono'}} }
+  },
+  responsive: true, maintainAspectRatio: false,
+};
 
 // ===== LOAD DATA =====
 async function loadData() {
-  document.getElementById('main-content').innerHTML = `
-    <div class="loading">
-      <div style="margin-bottom:16px">
-        <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
-      </div>
-      กำลังโหลดข้อมูล...
-    </div>`;
-
+  document.getElementById('main-content').innerHTML = `<div class="loading"><div style="margin-bottom:16px"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>กำลังโหลดข้อมูล...</div>`;
   try {
-    const res  = await fetch(GAS_URL + '?action=getData');
+    const res  = await fetch(GAS_URL + '?action=getAllData');
     const json = await res.json();
     if (json.status !== 'OK') throw new Error(json.message);
-    renderDashboard(json.data);
-  } catch (err) {
-    document.getElementById('main-content').innerHTML = `
-      <div class="error-box">
-        ⚠️ โหลดข้อมูลไม่ได้ค่ะ<br>
-        <small style="color:var(--muted);margin-top:6px;display:block">${err.message}</small>
-        <small style="color:var(--muted)">ตรวจสอบว่าใส่ GAS_URL ถูกต้องและ Deploy แล้วนะคะ</small>
-      </div>`;
+    renderDashboard(json.evLog, json.maintenance, json.loan);
+    document.getElementById('last-update').textContent = 'อัปเดต: ' + new Date().toLocaleTimeString('th-TH');
+  } catch(err) {
+    document.getElementById('main-content').innerHTML = `<div class="error-box">⚠️ โหลดข้อมูลไม่ได้ค่ะ<br><small style="color:var(--muted);margin-top:6px;display:block">${err.message}</small></div>`;
   }
 }
 
 // ===== RENDER =====
-function renderDashboard(raw) {
-  // clean data
-  const rows = raw.filter(r => r['ระยะทาง, km'] && r['ระยะทาง, km'] !== '');
+function renderDashboard(rawEV, rawMaint, rawLoan) {
+  // --- EV Log ---
+  const evRows  = rawEV.filter(r => r['ระยะทาง, km'] && r['ระยะทาง, km'] !== '');
+  const evSorted = sortByDate(evRows);
+  const totalKm   = evRows.length ? Math.max(...evRows.map(r=>num(r['ระยะทาง, km']))) : 0;
+  const firstKm   = evRows.length ? Math.min(...evRows.map(r=>num(r['ระยะทาง, km']))) : 0;
+  const totalEnergy = sum(evRows, 'ค่าไฟ AC (บาท)') + sum(evRows, 'ค่าชาร์จ DC (บาท)');
+  const bpkmVals  = evRows.filter(r=>r['บาท/km']&&r['บาท/km']!=='').map(r=>num(r['บาท/km']));
+  const avgBpkm   = bpkmVals.length ? bpkmVals.reduce((a,b)=>a+b,0)/bpkmVals.length : 0;
+  const avgCons   = avg(evRows, 'อัตราสิ้นเปลือง trip, kWh/100km');
+  const avgDrive  = avg(evRows, 'สัดส่วน % พลังงานที่ใช้ขับเคลื่อน');
+  const avgAC     = avg(evRows, 'สัดส่วน % พลังงานที่ใช้แอร์');
+  const avgOther  = avg(evRows, 'สัดส่วน % พลังงานที่ใช้อื่น ๆ');
 
-  // ---- STATS ----
-  const totalKm     = Math.max(...rows.map(r => num(r['ระยะทาง, km'])));
-  const firstKm     = Math.min(...rows.map(r => num(r['ระยะทาง, km'])));
-  const drivenKm    = totalKm - firstKm;
-  const allCosts    = rows.map(r => num(r['ค่าไฟ AC (บาท)']) + num(r['ค่าชาร์จ DC (บาท)']));
-  const totalCost   = allCosts.reduce((a,b) => a+b, 0);
-  const bpkm        = rows.filter(r => r['บาท/km'] && r['บาท/km'] !== '').map(r => num(r['บาท/km']));
-  const avgBpkm     = bpkm.length ? bpkm.reduce((a,b)=>a+b,0)/bpkm.length : 0;
-  const consVals    = rows.map(r => num(r['อัตราสิ้นเปลือง trip, kWh/100km'])).filter(v => v > 0);
-  const avgCons     = consVals.length ? consVals.reduce((a,b)=>a+b,0)/consVals.length : 0;
-
-  // ---- DATES ----
-  const dates = rows.map(r => {
-    const d = r['วันที่'];
-    return d instanceof Date ? d : new Date(d);
-  }).filter(d => !isNaN(d));
-  const sortedDates = [...dates].sort((a,b) => a-b);
-  const lastDate = sortedDates[sortedDates.length-1];
-  document.getElementById('last-update').textContent =
-    'อัปเดตล่าสุด: ' + new Date().toLocaleTimeString('th-TH');
-
-  // ---- SORTED ROWS ----
-  const sortedRows = [...rows].sort((a,b) => {
-    const da = a['วันที่'] instanceof Date ? a['วันที่'] : new Date(a['วันที่']);
-    const db = b['วันที่'] instanceof Date ? b['วันที่'] : new Date(b['วันที่']);
-    return da - db;
-  });
-
-  // ---- ENERGY SPLIT AVG ----
-  const avgDrive = avg(rows, 'สัดส่วน % พลังงานที่ใช้ขับเคลื่อน');
-  const avgAC    = avg(rows, 'สัดส่วน % พลังงานที่ใช้แอร์');
-  const avgOther = avg(rows, 'สัดส่วน % พลังงานที่ใช้อื่น ๆ');
-
-  // ---- CHARGE TYPE ----
+  // charge type counts
   const chargeCounts = {};
-  rows.forEach(r => {
-    const t = r['ชาร์จแบบ AC/DC'] || 'ไม่ระบุ';
-    chargeCounts[t] = (chargeCounts[t] || 0) + 1;
-  });
+  evRows.forEach(r => { const t = r['ชาร์จแบบ AC/DC']||'ไม่ระบุ'; chargeCounts[t]=(chargeCounts[t]||0)+1; });
   const chargeTotal = Object.values(chargeCounts).reduce((a,b)=>a+b,0);
-  const chargeColors = {
-    'AC Portable':          '#0090ff',
-    'AC Wall Charge':       '#00c8ff',
-    'DC Spark บางจาก':      '#ff9f40',
-    'DC EVStationPluz PTT': '#ff6b35',
-  };
+  const chargeColors = { 'AC Portable':'#0090ff','AC Wall Charge':'#00c8ff','DC Spark บางจาก':'#ff9f40','DC EVStationPluz PTT':'#ff6b35','DC EA Anywhere':'#ff9f40','DC MEA EV':'#ffb347','DC อื่น ๆ':'#ffd580' };
 
-  // ---- RENDER HTML ----
+  // --- Maintenance ---
+  const maintRows = rawMaint || [];
+  const totalMaint = sum(maintRows, 'ค่าใช้จ่าย, บาท');
+  const maintBpkm  = totalKm > 0 ? totalMaint / totalKm : 0;
+
+  // มวลหมู่แยกหมวด
+  const maintByCategory = {};
+  maintRows.forEach(r => {
+    const cat = r['หมวด'] || 'อื่น ๆ';
+    maintByCategory[cat] = (maintByCategory[cat]||0) + num(r['ค่าใช้จ่าย, บาท']);
+  });
+
+  // --- Loan ---
+  const loanRows  = rawLoan || [];
+  const totalLoan = sum(loanRows, 'จำนวนเงิน') || sum(loanRows, 'ค่างวด') || sum(loanRows, 'Amount') || loanRows.reduce((a,r)=>{
+    const keys = Object.keys(r).filter(k => !['วันที่','หมายเหตุ','รายการ'].includes(k));
+    return a + keys.reduce((s,k)=>s+num(r[k]),0);
+  }, 0);
+  const loanBpkm  = totalKm > 0 ? totalLoan / totalKm : 0;
+
+  // --- Total cost/km ---
+  const totalCostAll  = totalEnergy + totalMaint + totalLoan;
+  const totalBpkmAll  = totalKm > 0 ? totalCostAll / totalKm : 0;
+
+  // ===== BUILD HTML =====
   document.getElementById('main-content').innerHTML = `
-    <!-- Stat Cards -->
+
+    <!-- ======= OVERVIEW ======= -->
+    <div class="section-label">ภาพรวมต้นทุนทั้งหมด</div>
+
+    <div class="cost-banner">
+      <div>
+        <div class="cost-banner-title">ต้นทุนรวม / km</div>
+        <div class="cost-banner-val">${fmtN(totalBpkmAll,2)}</div>
+        <div class="cost-banner-unit">บาท/km · ระยะสะสม ${fmtN(totalKm)} km</div>
+      </div>
+      <div class="cost-breakdown">
+        <div class="cost-item">
+          <div class="cost-item-label">⚡ ค่าพลังงาน</div>
+          <div class="cost-item-val energy">${fmtN(totalEnergy,0)} ฿</div>
+          <div class="cost-banner-unit">${fmtN(totalKm>0?totalEnergy/totalKm:0,2)} บาท/km</div>
+        </div>
+        <div class="cost-item">
+          <div class="cost-item-label">🔧 ค่าบำรุงรักษา</div>
+          <div class="cost-item-val maint">${fmtN(totalMaint,0)} ฿</div>
+          <div class="cost-banner-unit">${fmtN(maintBpkm,2)} บาท/km</div>
+        </div>
+        <div class="cost-item">
+          <div class="cost-item-label">💳 ค่าผ่อน/ดาวน์</div>
+          <div class="cost-item-val loan">${fmtN(totalLoan,0)} ฿</div>
+          <div class="cost-banner-unit">${fmtN(loanBpkm,2)} บาท/km</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======= EV LOG ======= -->
+    <div class="section-label">ค่าพลังงาน — EV Log</div>
+
     <div class="stats-grid">
       <div class="stat-card green">
         <div class="stat-label">ระยะทางสะสม</div>
-        <div class="stat-value green">${totalKm.toLocaleString()}</div>
+        <div class="stat-value green">${fmtN(totalKm)}</div>
         <div class="stat-unit">km</div>
       </div>
       <div class="stat-card blue">
-        <div class="stat-label">ค่าใช้จ่ายรวม</div>
-        <div class="stat-value blue">${totalCost.toFixed(0)}</div>
+        <div class="stat-label">ค่าพลังงานรวม</div>
+        <div class="stat-value blue">${fmtN(totalEnergy,0)}</div>
         <div class="stat-unit">บาท</div>
       </div>
       <div class="stat-card orange">
         <div class="stat-label">บาท/km เฉลี่ย</div>
-        <div class="stat-value orange">${avgBpkm.toFixed(2)}</div>
+        <div class="stat-value orange">${fmtN(avgBpkm,2)}</div>
         <div class="stat-unit">บาท/km</div>
       </div>
       <div class="stat-card red">
         <div class="stat-label">อัตราสิ้นเปลือง</div>
-        <div class="stat-value red">${avgCons.toFixed(1)}</div>
+        <div class="stat-value red">${fmtN(avgCons,1)}</div>
         <div class="stat-unit">kWh/100km เฉลี่ย</div>
       </div>
     </div>
 
-    <!-- Chart row 1 -->
     <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-dot green"></div>
-        <div class="chart-title">ระยะทางสะสม (km)</div>
-      </div>
+      <div class="chart-header"><div class="chart-dot green"></div><div class="chart-title">ระยะทางสะสม (km)</div></div>
       <div class="chart-wrap"><canvas id="chart-dist"></canvas></div>
     </div>
 
     <div class="grid-2">
       <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-dot orange"></div>
-          <div class="chart-title">บาท/km รายครั้ง</div>
-        </div>
+        <div class="chart-header"><div class="chart-dot orange"></div><div class="chart-title">บาท/km รายครั้ง</div></div>
         <div class="chart-wrap"><canvas id="chart-bpkm"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-dot blue"></div>
-          <div class="chart-title">อัตราสิ้นเปลือง (kWh/100km)</div>
-        </div>
+        <div class="chart-header"><div class="chart-dot blue"></div><div class="chart-title">อัตราสิ้นเปลือง kWh/100km</div></div>
         <div class="chart-wrap"><canvas id="chart-cons"></canvas></div>
       </div>
     </div>
 
     <div class="grid-2">
-      <!-- Energy donut -->
       <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-dot green"></div>
-          <div class="chart-title">สัดส่วนพลังงานเฉลี่ย</div>
-        </div>
+        <div class="chart-header"><div class="chart-dot green"></div><div class="chart-title">สัดส่วนพลังงานเฉลี่ย</div></div>
         <div class="donut-wrap">
           <canvas id="chart-energy"></canvas>
           <div class="donut-center">
-            <div class="donut-center-val">${avgDrive.toFixed(0)}%</div>
+            <div class="donut-center-val">${fmtN(avgDrive,0)}%</div>
             <div class="donut-center-lbl">ขับเคลื่อน</div>
           </div>
         </div>
       </div>
-
-      <!-- Charge type -->
       <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-dot blue"></div>
-          <div class="chart-title">สถิติการชาร์จ</div>
-        </div>
-        <div class="charge-legend" id="charge-legend"></div>
+        <div class="chart-header"><div class="chart-dot blue"></div><div class="chart-title">สถิติการชาร์จ</div></div>
+        <div class="bar-legend" id="charge-legend"></div>
       </div>
     </div>
 
-    <!-- Last trips -->
     <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-dot green"></div>
-        <div class="chart-title">บันทึกล่าสุด 5 ครั้ง</div>
-      </div>
+      <div class="chart-header"><div class="chart-dot green"></div><div class="chart-title">บันทึกล่าสุด 5 ครั้ง</div></div>
       <div style="overflow-x:auto">
-        <table class="trips-table">
-          <thead>
-            <tr>
-              <th>วันที่</th>
-              <th>ระยะสะสม</th>
-              <th>kWh/100km</th>
-              <th>ชาร์จ</th>
-              <th>ค่าใช้จ่าย</th>
-              <th>บาท/km</th>
-            </tr>
-          </thead>
-          <tbody id="trips-tbody"></tbody>
+        <table class="data-table">
+          <thead><tr><th>วันที่</th><th>ระยะสะสม</th><th>kWh/100km</th><th>ชาร์จ</th><th>ค่าใช้จ่าย</th><th>บาท/km</th></tr></thead>
+          <tbody id="ev-tbody"></tbody>
         </table>
       </div>
     </div>
+
+    <!-- ======= MAINTENANCE ======= -->
+    <div class="section-label">ค่าบำรุงรักษา — Maintenance</div>
+
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="stat-label">ค่าบำรุงรักษารวม</div>
+        <div class="stat-value purple">${fmtN(totalMaint,0)}</div>
+        <div class="stat-unit">บาท</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">บาท/km สะสม</div>
+        <div class="stat-value purple">${fmtN(maintBpkm,2)}</div>
+        <div class="stat-unit">บาท/km</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">จำนวนรายการ</div>
+        <div class="stat-value purple">${maintRows.length}</div>
+        <div class="stat-unit">รายการ</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-dot purple"></div><div class="chart-title">ค่าใช้จ่ายแยกหมวด</div></div>
+        <div class="bar-legend" id="maint-legend"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-dot purple"></div><div class="chart-title">รายการล่าสุด</div></div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>วันที่</th><th>รายการ</th><th>หมวด</th><th>บาท</th></tr></thead>
+            <tbody id="maint-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======= LOAN ======= -->
+    <div class="section-label">ค่าผ่อน / ดาวน์ — Loan</div>
+
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">จ่ายสะสม (FC)</div>
+        <div class="stat-value blue">${fmtN(totalLoan,0)}</div>
+        <div class="stat-unit">บาท</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">FC / km</div>
+        <div class="stat-value blue">${fmtN(loanBpkm,2)}</div>
+        <div class="stat-unit">บาท/km</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">จำนวนงวด</div>
+        <div class="stat-value blue">${loanRows.length}</div>
+        <div class="stat-unit">งวด/รายการ</div>
+      </div>
+    </div>
+
   `;
 
-  // ---- CHARTS ----
-  const chartDefaults = {
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { color: 'rgba(42,49,69,0.6)' }, ticks: { color: '#6b7592', font: { size: 10, family: 'DM Mono' } } },
-      y: { grid: { color: 'rgba(42,49,69,0.6)' }, ticks: { color: '#6b7592', font: { size: 10, family: 'DM Mono' } } }
-    }
-  };
-
-  const labels = sortedRows.map(r => fmtDate(r['วันที่']));
+  // ===== CHARTS =====
+  const evLabels = evSorted.map(r => fmtD(r['วันที่']));
 
   // Distance
   new Chart(document.getElementById('chart-dist'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: sortedRows.map(r => num(r['ระยะทาง, km'])),
-        borderColor: '#00e5a0',
-        backgroundColor: 'rgba(0,229,160,0.08)',
-        borderWidth: 2,
-        pointRadius: 3,
-        pointBackgroundColor: '#00e5a0',
-        fill: true,
-        tension: 0.3,
-      }]
-    },
-    options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+    data: { labels: evLabels, datasets: [{ data: evSorted.map(r=>num(r['ระยะทาง, km'])), borderColor:'#00e5a0', backgroundColor:'rgba(0,229,160,.08)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#00e5a0', fill:true, tension:.3 }] },
+    options: { ...CHART_DEFAULTS }
   });
 
   // บาท/km
+  const bpkmRows = evSorted.filter(r=>r['บาท/km']&&r['บาท/km']!=='');
   new Chart(document.getElementById('chart-bpkm'), {
     type: 'bar',
-    data: {
-      labels: sortedRows.filter(r=>r['บาท/km'] && r['บาท/km']!=='').map(r=>fmtDate(r['วันที่'])),
-      datasets: [{
-        data: sortedRows.filter(r=>r['บาท/km'] && r['บาท/km']!=='').map(r=>num(r['บาท/km'])),
-        backgroundColor: 'rgba(255,159,64,0.7)',
-        borderColor: '#ff9f40',
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
-    },
-    options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+    data: { labels: bpkmRows.map(r=>fmtD(r['วันที่'])), datasets: [{ data: bpkmRows.map(r=>num(r['บาท/km'])), backgroundColor:'rgba(255,159,64,.7)', borderColor:'#ff9f40', borderWidth:1, borderRadius:4 }] },
+    options: { ...CHART_DEFAULTS }
   });
 
   // Consumption
   new Chart(document.getElementById('chart-cons'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'trip',
-          data: sortedRows.map(r => num(r['อัตราสิ้นเปลือง trip, kWh/100km']) || null),
-          borderColor: '#0090ff',
-          backgroundColor: 'rgba(0,144,255,0.08)',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointBackgroundColor: '#0090ff',
-          fill: true,
-          tension: 0.3,
-        },
-        {
-          label: 'all',
-          data: sortedRows.map(r => num(r['อัตราสิ้นเปลือง all, kWh/100km']) || null),
-          borderColor: 'rgba(0,144,255,0.4)',
-          borderWidth: 1.5,
-          borderDash: [4,3],
-          pointRadius: 2,
-          tension: 0.3,
-        }
-      ]
-    },
-    options: {
-      ...chartDefaults,
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          labels: { color: '#6b7592', font: { size: 10, family: 'DM Mono' }, boxWidth: 12 }
-        }
-      }
-    }
+    data: { labels: evLabels, datasets: [
+      { label:'trip', data: evSorted.map(r=>num(r['อัตราสิ้นเปลือง trip, kWh/100km'])||null), borderColor:'#0090ff', backgroundColor:'rgba(0,144,255,.08)', borderWidth:2, pointRadius:3, fill:true, tension:.3 },
+      { label:'all',  data: evSorted.map(r=>num(r['อัตราสิ้นเปลือง all, kWh/100km'])||null), borderColor:'rgba(0,144,255,.4)', borderWidth:1.5, borderDash:[4,3], pointRadius:2, tension:.3 }
+    ]},
+    options: { ...CHART_DEFAULTS, plugins: { legend: { display:true, labels:{color:'#6b7592',font:{size:10,family:'DM Mono'},boxWidth:12} } } }
   });
 
   // Energy donut
   new Chart(document.getElementById('chart-energy'), {
     type: 'doughnut',
-    data: {
-      labels: ['ขับเคลื่อน', 'แอร์', 'อื่น ๆ'],
-      datasets: [{
-        data: [avgDrive, avgAC, avgOther],
-        backgroundColor: ['#00e5a0','#0090ff','#ff9f40'],
-        borderWidth: 0,
-        hoverOffset: 4,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '72%',
-      plugins: {
-        legend: {
-          display: true,
-          position: 'bottom',
-          labels: { color: '#9ba8c4', font: { size: 11, family: 'Sarabun' }, boxWidth: 10, padding: 12 }
-        }
-      }
-    }
+    data: { labels:['ขับเคลื่อน','แอร์','อื่น ๆ'], datasets:[{ data:[avgDrive,avgAC,avgOther], backgroundColor:['#00e5a0','#0090ff','#ff9f40'], borderWidth:0, hoverOffset:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{ legend:{ display:true, position:'bottom', labels:{color:'#9ba8c4',font:{size:11,family:'Sarabun'},boxWidth:10,padding:12} } } }
   });
 
   // Charge type legend
-  const legendEl = document.getElementById('charge-legend');
-  Object.entries(chargeCounts)
-    .sort((a,b) => b[1]-a[1])
-    .forEach(([name, count]) => {
-      const pct = ((count / chargeTotal) * 100).toFixed(0);
-      const color = chargeColors[name] || '#6b7592';
-      legendEl.innerHTML += `
-        <div class="charge-row-item">
-          <div class="charge-name">${name}</div>
-          <div class="charge-bar-bg">
-            <div class="charge-bar-fill" style="width:${pct}%;background:${color}"></div>
-          </div>
-          <div class="charge-pct">${pct}%</div>
-        </div>`;
-    });
-
-  // Last 5 trips table
-  const tbody = document.getElementById('trips-tbody');
-  const last5 = [...sortedRows].reverse().slice(0, 5);
-  last5.forEach(r => {
-    const type = r['ชาร์จแบบ AC/DC'] || '';
-    const isAC = type.startsWith('AC');
-    const cost = num(r['ค่าไฟ AC (บาท)']) + num(r['ค่าชาร์จ DC (บาท)']);
-    const bpkm = r['บาท/km'] ? num(r['บาท/km']).toFixed(2) : '—';
-    tbody.innerHTML += `
-      <tr>
-        <td>${fmtDate(r['วันที่'])}</td>
-        <td style="font-family:'DM Mono',monospace">${num(r['ระยะทาง, km']).toLocaleString()}</td>
-        <td style="font-family:'DM Mono',monospace;color:var(--accent2)">${num(r['อัตราสิ้นเปลือง trip, kWh/100km']).toFixed(1)}</td>
-        <td><span class="badge ${isAC?'ac':'dc'}">${type}</span></td>
-        <td style="font-family:'DM Mono',monospace;color:var(--accent)">${cost > 0 ? cost.toFixed(0)+' ฿' : '—'}</td>
-        <td style="font-family:'DM Mono',monospace;color:var(--warn)">${bpkm}</td>
-      </tr>`;
+  const chargeLegend = document.getElementById('charge-legend');
+  Object.entries(chargeCounts).sort((a,b)=>b[1]-a[1]).forEach(([name,count]) => {
+    const pct = ((count/chargeTotal)*100).toFixed(0);
+    const color = chargeColors[name] || '#6b7592';
+    chargeLegend.innerHTML += `<div class="bar-row"><div class="bar-name">${name}</div><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="bar-val">${pct}%</div></div>`;
   });
+
+  // EV last 5
+  const evTbody = document.getElementById('ev-tbody');
+  [...evSorted].reverse().slice(0,5).forEach(r => {
+    const type = r['ชาร์จแบบ AC/DC']||'';
+    const isAC = type.startsWith('AC');
+    const cost = num(r['ค่าไฟ AC (บาท)'])+num(r['ค่าชาร์จ DC (บาท)']);
+    const bpkm = r['บาท/km']&&r['บาท/km']!=='' ? fmtN(r['บาท/km'],2) : '—';
+    evTbody.innerHTML += `<tr>
+      <td>${fmtD(r['วันที่'])}</td>
+      <td style="font-family:'DM Mono',monospace">${fmtN(r['ระยะทาง, km'])}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--accent2)">${fmtN(r['อัตราสิ้นเปลือง trip, kWh/100km'],1)}</td>
+      <td><span class="badge ${isAC?'ac':'dc'}">${type}</span></td>
+      <td style="font-family:'DM Mono',monospace;color:var(--accent)">${cost>0?fmtN(cost,0)+' ฿':'—'}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--warn)">${bpkm}</td>
+    </tr>`;
+  });
+
+  // Maintenance category bars
+  const maintLegend = document.getElementById('maint-legend');
+  const maxMaint = Math.max(...Object.values(maintByCategory),1);
+  Object.entries(maintByCategory).sort((a,b)=>b[1]-a[1]).forEach(([cat,val]) => {
+    const pct = (val/maxMaint*100).toFixed(0);
+    maintLegend.innerHTML += `<div class="bar-row"><div class="bar-name">${cat}</div><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:var(--purple)"></div></div><div class="bar-val">${fmtN(val,0)} ฿</div></div>`;
+  });
+
+  // Maintenance last rows
+  const maintTbody = document.getElementById('maint-tbody');
+  if (maintRows.length === 0) {
+    maintTbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted)">ยังไม่มีข้อมูลค่ะ</td></tr>`;
+  } else {
+    sortByDate(maintRows).reverse().slice(0,5).forEach(r => {
+      maintTbody.innerHTML += `<tr>
+        <td>${fmtD(r['วันที่เข้ารับบริการ']||r['วันที่'])}</td>
+        <td style="color:var(--label)">${r['รายการ']||'—'}</td>
+        <td><span class="badge maint">${r['หมวด']||'—'}</span></td>
+        <td style="font-family:'DM Mono',monospace;color:var(--purple)">${fmtN(r['ค่าใช้จ่าย, บาท'],0)} ฿</td>
+      </tr>`;
+    });
+  }
 }
 
-// ===== HELPERS =====
-function num(v) { return parseFloat(v) || 0; }
-function avg(rows, key) {
-  const vals = rows.map(r => num(r[key])).filter(v => v > 0);
-  return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
-}
-function fmtDate(d) {
-  const date = d instanceof Date ? d : new Date(d);
-  if (isNaN(date)) return String(d);
-  return date.toLocaleDateString('th-TH', { day:'numeric', month:'short' });
-}
-
-// ===== INIT =====
 loadData();
 </script>
 </body>
